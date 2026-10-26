@@ -37,6 +37,7 @@ class VisualCropper:
                 "crop_y": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
                 "crop_width": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
                 "crop_height": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+                "show_info": ("BOOLEAN", {"default": True}),
             }
         }
 
@@ -54,6 +55,7 @@ class VisualCropper:
         crop_y,
         crop_width,
         crop_height,
+        show_info,
     ):
         image_path = folder_paths.get_annotated_filepath(image)
         if not os.path.isfile(image_path):

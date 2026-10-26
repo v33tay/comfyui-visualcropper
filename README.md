@@ -1,19 +1,18 @@
 # ComfyUI Visual Cropper
 
-`Load Image (Visual Crop)` is a ComfyUI custom node that loads an image, previews it in the node, and outputs a user-selected crop.
+Select a crop visually and send the result straight into your ComfyUI workflow.
 
-## Installation
+![Visual Cropper connected to Preview Image](docs/visual-cropper-example.png)
 
-1. Copy this repository into `ComfyUI/custom_nodes/comfyui-visualcropper`.
-2. Restart ComfyUI.
-3. Add **Load Image (Visual Crop)** from the **image** category.
+## Install
 
-## Usage
+Place this repository in `ComfyUI/custom_nodes/comfyui-visualcropper`, then restart ComfyUI.
 
-- Select or upload an image using the image field.
-- Choose an aspect ratio, or use **Free** for an unconstrained selection. Enable **vertical** to swap a preset's orientation.
-- Choosing a ratio fits a centered selection to the image. The area outside the crop box is dimmed. Drag outside the selection to draw a new crop, drag inside it to move the box, or drag an edge/corner handle to resize it.
-- The node can be resized in both width and height; the preview scales to fit while preserving the image's aspect ratio.
-- The node returns the cropped `IMAGE` and its `MASK`. Images with transparency produce an inverted alpha mask, matching ComfyUI's `Load Image` convention; opaque images produce an all-zero mask.
+## Use
 
-The crop rectangle is stored as normalized coordinates in the workflow, so it remains valid if the source image dimensions change.
+- Choose or upload an image, then select an aspect ratio or **Free**.
+- Drag to create a crop; drag inside it to move, or use a handle to resize.
+- Use **vertical** to flip a preset's orientation. Toggle **show_info** to display crop dimensions and megapixels.
+- Connect **IMAGE** to **Preview Image**. The node also outputs a transparency **MASK**.
+
+Resize the node freely—the preview fits while preserving the source image's proportions.

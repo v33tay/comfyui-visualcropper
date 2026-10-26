@@ -50,6 +50,19 @@ app.registerExtension({
 			width: getWidget("crop_width")?.value ?? 0,
 			height: getWidget("crop_height")?.value ?? 0,
 		});
+		const cropDimensions = (selection) => {
+			const left = Math.max(0, Math.min(sourceImage.width - 1, Math.round(selection.x * sourceImage.width)));
+			const top = Math.max(0, Math.min(sourceImage.height - 1, Math.round(selection.y * sourceImage.height)));
+			const right = Math.max(
+				left + 1,
+				Math.min(sourceImage.width, Math.round((selection.x + selection.width) * sourceImage.width)),
+			);
+			const bottom = Math.max(
+				top + 1,
+				Math.min(sourceImage.height, Math.round((selection.y + selection.height) * sourceImage.height)),
+			);
+			return { width: right - left, height: bottom - top };
+		};
 		const writeSelection = (selection) => {
 			for (const [name, value] of Object.entries({
 				crop_x: selection.x,
@@ -157,6 +170,28 @@ app.registerExtension({
 						handleSize,
 					);
 				}
+			}
+
+			if (getWidget("show_info")?.value !== false) {
+				const dimensions = cropDimensions(selection);
+				const megapixels = (dimensions.width * dimensions.height / 1_000_000).toFixed(2);
+				const label = `${dimensions.width} × ${dimensions.height} px · ${megapixels} MP`;
+				const fontSize = Math.max(10, Math.min(16, Math.min(canvas.width, canvas.height) / 18));
+				const padding = fontSize * 0.5;
+				context.font = `600 ${fontSize}px sans-serif`;
+				context.textBaseline = "middle";
+				const labelWidth = context.measureText(label).width;
+				const labelX = 8;
+				const labelY = 8;
+				context.fillStyle = "rgba(0, 0, 0, 0.72)";
+				context.fillRect(
+					labelX,
+					labelY,
+					labelWidth + padding * 2,
+					fontSize + padding * 2,
+				);
+				context.fillStyle = "#ffffff";
+				context.fillText(label, labelX + padding, labelY + fontSize / 2 + padding);
 			}
 		};
 
@@ -451,6 +486,14 @@ app.registerExtension({
 			widget.callback = (...args) => {
 				originalCallback?.(...args);
 				fitSelection();
+			};
+		}
+		const infoWidget = getWidget("show_info");
+		if (infoWidget) {
+			const originalCallback = infoWidget.callback;
+			infoWidget.callback = (...args) => {
+				originalCallback?.(...args);
+				drawPreview();
 			};
 		}
 
