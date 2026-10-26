@@ -13,6 +13,7 @@
 - Select or upload an image using the image field.
 - Choose an aspect ratio, or use **Free** for an unconstrained selection. Enable **vertical** to swap a preset's orientation.
 - Choosing a ratio fits a centered selection to the image. The area outside the crop box is dimmed. Drag outside the selection to draw a new crop, drag inside it to move the box, or drag an edge/corner handle to resize it.
+- The node can be resized in both width and height; the preview scales to fit while preserving the image's aspect ratio.
 - The node returns the cropped `IMAGE` and its `MASK`. Images with transparency produce an inverted alpha mask, matching ComfyUI's `Load Image` convention; opaque images produce an all-zero mask.
 
 The crop rectangle is stored as normalized coordinates in the workflow, so it remains valid if the source image dimensions change.

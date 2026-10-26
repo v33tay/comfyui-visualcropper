@@ -19,7 +19,7 @@ app.registerExtension({
 		const canvas = document.createElement("canvas");
 		canvas.className = "visual-cropper-canvas";
 		canvas.style.cssText =
-			"display:block;width:100%;height:220px;object-fit:contain;background:#181818;cursor:crosshair;touch-action:none";
+			"display:block;width:100%;height:100%;object-fit:contain;background:#181818;cursor:crosshair;touch-action:none";
 		const context = canvas.getContext("2d");
 		if (!context) throw new Error("Could not create the crop preview canvas.");
 
@@ -32,19 +32,12 @@ app.registerExtension({
 		const getWidget = (name) => node.widgets?.find((widget) => widget.name === name);
 		const hideDefaultImagePreview = () => {
 			const widget = getWidget("$$canvas-image-preview");
-			let previewChanged = false;
 			if (widget && widget.type !== "hidden") {
 				widget.type = "hidden";
 				widget.computeSize = () => [0, -4];
-				previewChanged = true;
 			}
 			if (node.imgs?.length) {
 				node.imgs = [];
-				previewChanged = true;
-			}
-			if (previewChanged) {
-				node.setSize(node.computeSize());
-				node.setDirtyCanvas(true, true);
 			}
 		};
 		const getAspectRatio = () => {
@@ -84,11 +77,12 @@ app.registerExtension({
 
 		const resizeCanvas = () => {
 			const pixelRatio = window.devicePixelRatio || 1;
-			const width = Math.max(
-				1,
-				Math.round((canvas.clientWidth || node.size[0]) * pixelRatio),
-			);
-			const height = Math.max(1, Math.round(PREVIEW_HEIGHT * pixelRatio));
+			const bounds = canvas.getBoundingClientRect();
+			const cssWidth = canvas.clientWidth || bounds.width || node.size[0];
+			const cssHeight =
+				canvas.clientHeight || bounds.height || previewWidget.getHeight();
+			const width = Math.max(1, Math.round(cssWidth * pixelRatio));
+			const height = Math.max(1, Math.round(cssHeight * pixelRatio));
 			if (canvas.width !== width || canvas.height !== height) {
 				canvas.width = width;
 				canvas.height = height;
@@ -117,6 +111,7 @@ app.registerExtension({
 		};
 
 		const drawPreview = () => {
+			hideDefaultImagePreview();
 			if (!sourceImage || !context) return;
 			const scale = Math.min(canvas.width / sourceImage.width, canvas.height / sourceImage.height);
 			const width = sourceImage.width * scale;
@@ -425,9 +420,6 @@ app.registerExtension({
 			getWidth: () => node.size[0],
 			serialize: false,
 		});
-		previewWidget.computeSize = () => [node.size[0], PREVIEW_HEIGHT];
-		const resizeObserver = new ResizeObserver(resizeCanvas);
-		resizeObserver.observe(canvas);
 
 		for (const name of ["crop_x", "crop_y", "crop_width", "crop_height"]) {
 			const widget = getWidget(name);
@@ -462,7 +454,30 @@ app.registerExtension({
 			};
 		}
 
-		node.setSize(node.computeSize());
+		const minimumSize = node.computeSize();
+		const minimumNonPreviewHeight = minimumSize[1] - PREVIEW_HEIGHT;
+		node.setSize([
+			Math.max(node.size[0], minimumSize[0]),
+			Math.max(node.size[1], minimumSize[1]),
+		]);
+		previewWidget.getHeight = () =>
+			Math.max(PREVIEW_HEIGHT, node.size[1] - minimumNonPreviewHeight);
+		previewWidget.computeSize = () => [minimumSize[0], previewWidget.getHeight()];
+		node.computeSize = () => [...minimumSize];
+
+		const resizeObserver = new ResizeObserver(resizeCanvas);
+		resizeObserver.observe(canvas);
+		const originalOnResize = node.onResize;
+		node.onResize = function (...args) {
+			const result = originalOnResize?.apply(this, args);
+			resizeCanvas();
+			return result;
+		};
+		const originalOnDrawBackground = node.onDrawBackground;
+		node.onDrawBackground = function (...args) {
+			hideDefaultImagePreview();
+			return originalOnDrawBackground?.apply(this, args);
+		};
 		loadImage();
 	},
 });
